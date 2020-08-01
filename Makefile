@@ -1,5 +1,5 @@
 FQBN=arduino:avr:uno
-PROGRAM=shredder
+PROGRAM=PaperShredder
 PORT=/dev/ttyACM0
 
 compile:
@@ -11,3 +11,9 @@ show_boards:
 upload:
 	arduino-cli upload -p ${PORT} --fqbn ${FQBN} ${PROGRAM}
 
+monitor:
+	stty -F ${PORT} 9600 raw -clocal -echo
+	cat ${PORT}
+
+clean:
+	rm -rf PaperShredder/build
