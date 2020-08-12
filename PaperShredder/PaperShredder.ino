@@ -1,8 +1,9 @@
+// IR
+const int irRxPin = A5;
+
 // Button pins
 const int rwdBtnPin = 10;
 const int fwdBtnPin = 11;
-const int irRxPin = 6;
-const int irTxPin = 7;
 
 // LED
 const int powerLedPin = 9;
@@ -13,6 +14,7 @@ const int rwdMotorPin = 3;
 const int fwdMotorPin = 2;
 
 // State
+int irState = 0;
 int rwdRunState = 0;
 int fwdRunState = 0;
 int autoRunState = 0;
@@ -21,7 +23,6 @@ int autoEnabled = 0;
 // Click state
 int rwdBtnDown = 0;
 int fwdBtnDown = 0;
-int irRxTrigger = 0;
 
 // Run in fwd for a duration
 void runFwd() {
@@ -70,7 +71,6 @@ void enableAuto() {
       autoEnabled = 1;
 
       // Turn on light
-      digitalWrite(irTxPin, HIGH);
       digitalWrite(powerLedPin, HIGH);
     } else {
       Serial.println("Unable to run auto");
@@ -82,7 +82,6 @@ void enableAuto() {
 void disableAuto() {
   if (autoEnabled == 1) {
     Serial.println("Auto off");
-    digitalWrite(irTxPin, LOW);
     digitalWrite(powerLedPin, LOW);
     autoEnabled = 0;
   }
@@ -93,7 +92,6 @@ void autoStartFwd() {
   Serial.println("Request auto forward");
   if (autoEnabled && !rwdRunState && !fwdRunState) {
     Serial.println("Auto forward");
-    fwdRunState = 1;
 
     // Duration
     autoRunState = 1;
@@ -106,9 +104,11 @@ void autoStartFwd() {
 
 // Stop auto
 void autoStopFwd() {
-  digitalWrite(fwdMotorPin, LOW);
-  autoRunState = 0;
-  Serial.println("Auto forward complete");
+  if(autoRunState == 1) {
+    digitalWrite(fwdMotorPin, LOW);
+    autoRunState = 0;
+    Serial.println("Auto forward complete");
+  }
 }
 
 // Setup
@@ -116,23 +116,21 @@ void setup() {
   pinMode(rwdBtnPin, INPUT);
   pinMode(fwdBtnPin, INPUT);
   pinMode(irRxPin, INPUT);
-  pinMode(irTxPin, OUTPUT);
   pinMode(powerLedPin, OUTPUT);
   pinMode(tempLedPin, OUTPUT);
   pinMode(rwdMotorPin, OUTPUT);
   pinMode(fwdMotorPin, OUTPUT);
 
-  Serial.begin(9600);
+  Serial.begin(115200);
   enableAuto();
 }
 
 // Main loop
 void loop() {
+  int lastIrState = irState;
+  irState = min(1000, analogRead(irRxPin)) > 500 ? 0 : 1;
   rwdBtnDown = digitalRead(rwdBtnPin);
   fwdBtnDown = digitalRead(fwdBtnPin);
-  irRxTrigger = digitalRead(irRxPin);
-
-  Serial.println("irRxTrigger:" + irRxTrigger);
 
   // Available
   if (autoRunState == 0) {
@@ -149,15 +147,21 @@ void loop() {
       runFwd();
       enableAuto();
     }
+  }
 
-  // Check paper feed
-  } else {
-    if (irRxTrigger == 1) {
+  // Auto
+  if (autoEnabled == 1) {
+    if (irState != lastIrState) {
+      Serial.print("irState: ");
+      Serial.println(irState);
+    }
+
+    if (irState == 1) {
       autoStartFwd();
     } else {
       autoStopFwd();
     }
   }
 
-  delay(30);
+  delay(10);
 }

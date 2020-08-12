@@ -12,7 +12,7 @@ upload:
 	arduino-cli upload -p ${PORT} --fqbn ${FQBN} ${PROGRAM}
 
 monitor:
-	stty -F ${PORT} 9600 raw -clocal -echo
+	stty -F ${PORT} 115200 raw -clocal -echo
 	cat ${PORT}
 
 clean:
