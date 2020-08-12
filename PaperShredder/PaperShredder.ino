@@ -128,7 +128,7 @@ void setup() {
 // Main loop
 void loop() {
   int lastIrState = irState;
-  irState = min(1000, analogRead(irRxPin)) > 500 ? 0 : 1;
+  irState = min(1000, analogRead(irRxPin)) > 500 ? 1 : 0;
   rwdBtnDown = digitalRead(rwdBtnPin);
   fwdBtnDown = digitalRead(fwdBtnPin);
 
